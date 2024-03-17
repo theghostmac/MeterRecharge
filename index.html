@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prepaid Meter Recharge</title>
+</head>
+<body>
+<div id="balance">Balance: 0</div>
+<button id="rechargeBtn">Recharge</button>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.x/dist/ethers.umd.min.js"></script>
+<script>
+    async function loadContractABI() {
+        const response = await fetch('./MeterRecharge.json');
+        const data = await response.json();
+        return data;
+    }
+
+    async function main() {
+        const contractABI = await loadContractABI();
+        const provider = new ethers.Web3Provider(window.ethereum);
+        const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+        const contract = new ethers.Contract(contractAddress, contractABI, provider);
+
+        async function getBalance() {
+            // Ensure you have a correct account selected and the contract has a `getBalance` method.
+            await provider.send("eth_requestAccounts", []);
+            const signer = provider.getSigner();
+            const contractWithSigner = contract.connect(signer);
+            const balance = await contractWithSigner.getBalance(ethereum.selectedAddress);
+            document.getElementById('balance').innerText = `Balance: ${balance.toString()}`;
+        }
+
+        async function recharge() {
+            await provider.send("eth_requestAccounts", []);
+            const signer = provider.getSigner();
+            const contractWithSigner = contract.connect(signer);
+
+            // Specify the value in the transaction to send ETH
+            const tx = await contractWithSigner.recharge({value: ethers.parseEther("0.01")});
+            await tx.wait(); // Wait for the transaction to be mined
+
+            await getBalance(); // Update balance display after recharging
+        }
+
+        document.getElementById('rechargeBtn').addEventListener('click', recharge);
+
+        // Initial balance display
+        await getBalance();
+    }
+
+    main();
+</script>
+</body>
+</html>

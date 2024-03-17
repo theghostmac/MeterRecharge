@@ -10,6 +10,8 @@ contract MeterRecharge is Ownable {
     // Conversion rate from ETH to power units.
     uint256 public conversionRate;
 
+    mapping(address => uint256) public powerUnitBalances;
+
     constructor(uint256 _initialConversionRate) Ownable(msg.sender) {
         conversionRate = _initialConversionRate;
     }
@@ -29,14 +31,17 @@ contract MeterRecharge is Ownable {
         require(msg.value > 0, "Payment must be greater than 0");
 
         uint256 powerUnits = calculatePowerUnits(msg.value);
+        powerUnitBalances[msg.sender] += powerUnits; // Update the sender's balance
         emit Recharged(msg.sender, msg.value, powerUnits);
-
-        // TODO: handle the recharged power units.
     }
 
     // Calculate the power units from the ETH sent.
     function calculatePowerUnits(uint256 _ethAmount) public view returns (uint256) {
         return _ethAmount * conversionRate;
+    }
+
+    function getBalance(address user) public view returns (uint256) {
+        return powerUnitBalances[user];
     }
 
     // Withdraw function to transfer out the contract's balance (only by the owner).
